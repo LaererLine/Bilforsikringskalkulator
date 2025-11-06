@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="nb">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bilforsikring – elevvennlig estimator</title>
+    <meta name="description" content="Skriv inn bilpris og velg ny/brukt bil. Sett egenandel og om eier er under 23. Få estimat på kasko/delkasko.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      html,body{height:100%}
+      .card{box-shadow:0 4px 20px rgba(0,0,0,.06)}
+      .btn{transition:transform .02s ease; background:#e5e7eb; color:#111827; border-color:#9ca3af;}
+      .btn:active{transform:translateY(1px)}
+      /* Active state: darker pastel blue but BLACK text for maximum legibility */
+      .btn-active{background:#bfdbfe; color:#111827; border-color:#1e40af; font-weight:700}
+      .label{font-size:.875rem;color:#4b5563}
+      .value{color:#1d4ed8;font-weight:700}
+    </style>
+  </head>
+  <body class="min-h-full bg-gray-50 text-gray-900">
+    <main class="max-w-3xl mx-auto p-6">
+      <header class="mb-6">
+        <h1 class="text-2xl md:text-3xl font-semibold tracking-tight">Bilforsikring – enkelt estimat</h1>
+        <p class="text-sm text-gray-600 mt-1">Skriv inn <strong>bilens verdi</strong>, velg <strong>Ny bil</strong> eller <strong>Brukt bil</strong>, sett <strong>egenandel</strong> og om eier er <strong>under 23 år</strong>. Kalkulatoren regner ut anslått pris for <em>kasko</em> og <em>delkasko</em>.</p>
+      </header>
+
+      <section class="grid gap-4 md:grid-cols-3">
+        <!-- Input -->
+        <div class="md:col-span-3 bg-white rounded-2xl card p-4">
+          <label class="block text-sm font-medium mb-1" for="bilpris">Bilens verdi (kr)</label>
+          <input id="bilpris" inputmode="numeric" placeholder="f.eks. 250 000" class="w-full rounded-xl border border-gray-300 focus:border-gray-500 focus:ring-0 px-3 py-2" />
+
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="label mr-1">Biltype:</span>
+            <button id="preset-ny" class="btn px-3 py-2 rounded-xl border text-sm">Ny bil</button>
+            <button id="preset-brukt" class="btn px-3 py-2 rounded-xl border text-sm">Brukt bil</button>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="label mr-1">Egenandel ved skade:</span>
+            <button id="ed-10" class="btn px-3 py-2 rounded-xl border text-sm">10 000 kr</button>
+            <button id="ed-15" class="btn px-3 py-2 rounded-xl border text-sm">15 000 kr</button>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="label mr-1">Er bileier under 23 år?</span>
+            <button id="u23-ja" class="btn px-3 py-2 rounded-xl border text-sm">Ja</button>
+            <button id="u23-nei" class="btn px-3 py-2 rounded-xl border text-sm">Nei</button>
+          </div>
+
+          <p class="text-xs text-gray-500 mt-2">Undervisningsestimat – faktiske priser varierer med bonus, alder, bosted, kjørelengde, egenandel m.m.</p>
+        </div>
+
+        <!-- Kasko -->
+        <div class="bg-white rounded-2xl card p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="font-medium">Kasko</h2>
+            <span id="kasko-pct" class="text-xs text-blue-700 font-medium"></span>
+          </div>
+          <div class="text-sm grid grid-cols-2 gap-2">
+            <div class="bg-gray-50 rounded-xl p-2">
+              <div class="text-xs text-gray-500">Årlig</div>
+              <div id="kasko-arlig" class="value text-base md:text-lg">–</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-2">
+              <div class="text-xs text-gray-500">Per måned</div>
+              <div id="kasko-mnd" class="value text-base md:text-lg">–</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-2 col-span-2">
+              <div class="text-xs text-gray-500">Andel av bilens verdi</div>
+              <div id="kasko-andel" class="value">–</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delkasko -->
+        <div class="bg-white rounded-2xl card p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="font-medium">Delkasko</h2>
+            <span id="delkasko-pct" class="text-xs text-blue-700 font-medium"></span>
+          </div>
+          <div class="text-sm grid grid-cols-2 gap-2">
+            <div class="bg-gray-50 rounded-xl p-2">
+              <div class="text-xs text-gray-500">Årlig</div>
+              <div id="delkasko-arlig" class="value text-base md:text-lg">–</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-2">
+              <div class="text-xs text-gray-500">Per måned</div>
+              <div id="delkasko-mnd" class="value text-base md:text-lg">–</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-2 col-span-2">
+              <div class="text-xs text-gray-500">Andel av bilens verdi</div>
+              <div id="delkasko-andel" class="value">–</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Del/lagre -->
+        <div class="bg-white rounded-2xl card p-4 md:col-span-3">
+          <h2 class="font-medium mb-2">Del resultat</h2>
+          <p class="text-xs text-gray-500 mb-2">Valg og bilpris lagres i lenken (bp = bilpris, t = ny/brukt, ed = 10/15, u23 = ja/nei).</p>
+          <div class="flex gap-2">
+            <button id="copy-link" class="btn px-3 py-2 rounded-xl border text-sm">Kopier lenke</button>
+            <button id="share-link" class="btn px-3 py-2 rounded-xl border text-sm">Del …</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-6 text-xs text-gray-500">
+        Undervisningsverktøy – ikke en bindende pris.
+      </footer>
+    </main>
+
+    <script>
+      const nbf = new Intl.NumberFormat('nb-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 0 });
+      const pf = new Intl.NumberFormat('nb-NO', { maximumFractionDigits: 2 });
+      const $ = (id) => document.getElementById(id);
+
+      const bilpris = $('bilpris');
+      const btnNy = $('preset-ny');
+      const btnBrukt = $('preset-brukt');
+      const btnEd10 = $('ed-10');
+      const btnEd15 = $('ed-15');
+      const btnU23Ja = $('u23-ja');
+      const btnU23Nei = $('u23-nei');
+
+      const kAr = $('kasko-arlig');
+      const dAr = $('delkasko-arlig');
+      const kMnd = $('kasko-mnd');
+      const dMnd = $('delkasko-mnd');
+      const kAndel = $('kasko-andel');
+      const dAndel = $('delkasko-andel');
+      const kPctEl = $('kasko-pct');
+      const dPctEl = $('delkasko-pct');
+
+      const rates15 = {
+        ny: { kasko: 4.2, delkasko: 3.0 },
+        brukt: { kasko: 3.2, delkasko: 2.0 }
+      };
+      const rates10 = {
+        ny: { kasko: 5.0, delkasko: 3.8 },
+        brukt: { kasko: 4.0, delkasko: 2.8 }
+      };
+
+      let current = 'ny';
+      let egenandel = '15';
+      let under23 = 'nei';
+
+      function setActiveButtons(){
+        btnNy.classList.toggle('btn-active', current==='ny');
+        btnBrukt.classList.toggle('btn-active', current==='brukt');
+        btnEd10.classList.toggle('btn-active', egenandel==='10');
+        btnEd15.classList.toggle('btn-active', egenandel==='15');
+        btnU23Ja.classList.toggle('btn-active', under23==='ja');
+        btnU23Nei.classList.toggle('btn-active', under23==='nei');
+      }
+
+      function getBase(){
+        return (egenandel==='10') ? rates10[current] : rates15[current];
+      }
+
+      function getEffective(){
+        const base = getBase();
+        const add = (under23==='ja') ? 1.0 : 0.0; // +1 prosentpoeng
+        return { kasko: base.kasko + add, delkasko: base.delkasko + add };
+      }
+
+      function toNumber(v){
+        if(!v) return 0;
+        const normalized = (''+v).replace(/\s/g,'').replace(/\./g,'').replace(/,/g,'');
+        const num = Number(normalized);
+        return Number.isFinite(num) ? num : 0;
+      }
+
+      function updateQuery(){
+        const params = new URLSearchParams(location.search);
+        const bp = toNumber(bilpris.value);
+        if(bp) params.set('bp', bp); else params.delete('bp');
+        params.set('t', current);
+        params.set('ed', egenandel);
+        params.set('u23', under23);
+        history.replaceState(null, '', `${location.pathname}?${params.toString()}`);
+      }
+
+      function readQuery(){
+        const p = new URLSearchParams(location.search);
+        if(p.get('bp')) bilpris.value = p.get('bp');
+        const t = p.get('t'); if(t==='ny'||t==='brukt') current = t;
+        const ed = p.get('ed'); if(ed==='10'||ed==='15') egenandel = ed;
+        const u23 = p.get('u23'); if(u23==='ja'||u23==='nei') under23 = u23;
+      }
+
+      function render(){
+        setActiveButtons();
+        const bp = toNumber(bilpris.value);
+        const eff = getEffective();
+
+        kPctEl.textContent = eff.kasko.toFixed(1) + ' %';
+        dPctEl.textContent = eff.delkasko.toFixed(1) + ' %';
+
+        if(!bp){
+          kAr.textContent = '–'; dAr.textContent = '–';
+          kMnd.textContent = '–'; dMnd.textContent = '–';
+          kAndel.textContent = '–'; dAndel.textContent = '–';
+          updateQuery();
+          return;
+        }
+
+        const kasko = Math.round(bp * (eff.kasko/100));
+        const delkasko = Math.round(bp * (eff.delkasko/100));
+
+        kAr.textContent = nbf.format(kasko);
+        dAr.textContent = nbf.format(delkasko);
+        kMnd.textContent = nbf.format(kasko/12);
+        dMnd.textContent = nbf.format(delkasko/12);
+        kAndel.textContent = `${pf.format((kasko/bp)*100)} %`;
+        dAndel.textContent = `${pf.format((delkasko/bp)*100)} %`;
+
+        updateQuery();
+      }
+
+      function hook(){
+        bilpris.addEventListener('input', render);
+        btnNy.addEventListener('click', ()=>{ current='ny'; render(); });
+        btnBrukt.addEventListener('click', ()=>{ current='brukt'; render(); });
+        btnEd10.addEventListener('click', ()=>{ egenandel='10'; render(); });
+        btnEd15.addEventListener('click', ()=>{ egenandel='15'; render(); });
+        btnU23Ja.addEventListener('click', ()=>{ under23='ja'; render(); });
+        btnU23Nei.addEventListener('click', ()=>{ under23='nei'; render(); });
+        document.getElementById('copy-link').addEventListener('click', ()=>{
+          navigator.clipboard.writeText(location.href).then(()=>flash('Lenke kopiert!')).catch(()=>{});
+        });
+        document.getElementById('share-link').addEventListener('click', ()=>{
+          if(navigator.share){ navigator.share({ title: document.title, url: location.href }).catch(()=>{});} else { navigator.clipboard.writeText(location.href); }
+        });
+      }
+
+      function flash(text){
+        const el = document.createElement('div');
+        el.textContent = text;
+        el.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm px-3 py-2 rounded-xl';
+        document.body.appendChild(el);
+        setTimeout(()=> el.remove(), 1500);
+      }
+
+      readQuery();
+      hook();
+      render();
+    </script>
+  </body>
+</html>
